@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#F2F2F7">
+    <title>Minhas Finanças V11</title>
+    <style>
+        :root {
+            --bg-body: #F2F2F7;
+            --blue: #007AFF;
+            --red: #E64A40;
+            --green: #34C759;
+            --gray: #8E8E93;
+            --input-bg: #E5E5EA;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            margin: 0; padding: 0;
+            padding-bottom: 110px;
+            user-select: none;
+        }
+
+        /* --- HEADER & NAV --- */
+        header {
+            background: var(--bg-body);
+            padding: 50px 20px 10px 20px;
+            position: sticky; top: 0; z-index: 50;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .nav-month {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(118,118,128,0.12); padding: 5px; border-radius: 10px;
+        }
+        .btn-nav { font-size: 20px; padding: 5px 20px; background: none; border: none; color: var(--blue); cursor: pointer; }
+        .title-month { font-weight: 600; text-transform: capitalize; font-size: 17px; }
+
+        /* --- SUMMARY CARD --- */
+        .card-summary { text-align: center; margin: 20px; padding: 20px; background: white; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .lbl-total { color: #8E8E93; font-size: 13px; text-transform: uppercase; }
+        .val-total { font-size: 38px; font-weight: 700; margin: 5px 0; color: #000; letter-spacing: -1px;}
+        
+        /* Nova linha de resumo (Pago + Falta) */
+        .summary-row { display: flex; justify-content: center; gap: 10px; margin-top: 5px; }
+        .pill-val { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 12px; }
+        .pill-paid { color: var(--green); background: rgba(52,199,89,0.15); }
+        .pill-left { color: var(--red); background: rgba(230, 74, 64, 0.15); }
+
+        /* --- LISTA --- */
+        .list-area { padding: 0 20px; }
+        
+        .item-card {
+            padding: 16px; border-radius: 14px; margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            transition: transform 0.1s;
+            display: flex; flex-direction: column;
+            position: relative;
+        }
+        .item-card:active { transform: scale(0.99); }
+
+        /* STATUS */
+        .item-card.pending { background-color: var(--red); color: white; }
+        .item-card.pending .item-info span { color: rgba(255,255,255,0.8); }
+        .item-card.pending .check-box { border-color: white; } 
+        .item-card.pending .btn-action { color: rgba(255,255,255,0.8); }
+
+        .item-card.paid { background-color: var(--green); color: white; }
+        .item-card.paid .item-info span { color: rgba(255,255,255,0.8); }
+        .item-card.paid .check-box { background: white; border-color: white; }
+        .item-card.paid .check-box::after { content: '✓'; color: var(--green); font-weight: 900; font-size: 16px;}
+        .item-card.paid .btn-action { color: rgba(255,255,255,0.8); }
+
+        /* Layout interno */
+        .card-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .item-left { display: flex; align-items: center; gap: 14px; flex: 1; }
+        
+        .check-box {
+            width: 28px; height: 28px; border-radius: 50%; border: 2px solid;
+            flex-shrink: 0; display: flex; justify-content: center; align-items: center;
+        }
+
+        .item-info h3 { margin: 0; font-size: 17px; font-weight: 800; }
+        .item-info span { font-size: 13px; }
+        
+        .item-right { display: flex; align-items: center; gap: 12px; }
+        .item-value { font-size: 17px; font-weight: 700; text-align: right; }
+        
+        /* Botões do Card (Lixo e Seta) */
+        .btn-action {
+            background: none; border: none; font-size: 16px; padding: 5px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .btn-expand { font-size: 12px; transition: transform 0.3s; }
+        .btn-expand.open { transform: rotate(180deg); }
+        
+        /* Detalhes */
+        .card-details {
+            margin-top: 0; max-height: 0; overflow: hidden;
+            font-size: 14px; opacity: 0.9;
+            transition: max-height 0.3s ease, margin-top 0.3s ease;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        .card-details.show { margin-top: 12px; max-height: 200px; padding-top: 8px; }
+
+        /* --- BACKUP --- */
+        .backup-section {
+            padding: 20px; margin-top: 10px;
+            display: flex; flex-direction: column; gap: 10px; align-items: center;
+        }
+        .btn-sec {
+            background: #ffffff; color: var(--blue);
+            border: 1px solid #d1d1d6; padding: 14px 20px; 
+            border-radius: 12px; font-weight: 600; font-size: 15px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .btn-sec:active { background: #f2f2f7; transform: scale(0.98); }
+
+        /* --- MODAL --- */
+        .modal-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 100;
+            display: none; justify-content: center; align-items: flex-end;
+        }
+        .modal-bg.show { display: flex; }
+        
+        .modal-body {
+            background: #FFFFFF; width: 100%; max-width: 600px;
+            border-radius: 20px 20px 0 0; padding: 25px;
+            animation: slideUp 0.3s;
+            padding-bottom: 40px;
+        }
+        @keyframes slideUp { from {transform: translateY(100%)} to {transform: translateY(0)}}
+
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 25px; align-items: center; }
+        .modal-header h3 { margin: 0; font-size: 20px; }
+        .btn-close { border: none; background: none; color: var(--blue); font-size: 17px; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 14px; color: #8E8E93; margin-bottom: 8px; font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%; padding: 14px; 
+            background-color: var(--input-bg);
+            border: none; border-radius: 12px;
+            font-size: 17px; color: #000; outline: none;
+        }
+
+        .btn-main {
+            width: 100%; background: var(--blue); color: white;
+            padding: 16px; border-radius: 12px; border: none;
+            font-size: 17px; font-weight: 600; margin-top: 10px;
+        }
+        
+        .delete-section { display: none; margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .btn-delete { background: white; color: var(--red); border: 1px solid #ffcccc; }
+        .btn-delete-future { background: #fff0f0; color: var(--red); border: none; }
+
+        /* --- FAB & TABS --- */
+        .fab {
+            position: fixed; bottom: 85px; right: 20px;
+            width: 55px; height: 55px; background: var(--blue);
+            border-radius: 50%; color: white; font-size: 30px;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 15px rgba(0,122,255,0.4); z-index: 90;
+        }
+
+        .tab-bar {
+            position: fixed; bottom: 0; width: 100%; background: rgba(255,255,255,0.95);
+            border-top: 1px solid #C6C6C8; display: flex; padding-bottom: 20px; padding-top: 10px;
+            z-index: 95;
+        }
+        .tab-btn { flex: 1; border: none; background: none; color: #8E8E93; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .tab-btn.active { color: var(--blue); }
+        .tab-icon { font-size: 22px; }
+
+        /* --- CHARTS --- */
+        #view-charts { display: none; padding: 80px 20px; }
+        .chart-bar-container {
+            height: 240px; display: flex; align-items: flex-end; gap: 15px;
+            overflow-x: auto; padding: 20px 5px; margin-top: 10px;
+            scrollbar-width: none;
+        }
+        .chart-bar-container::-webkit-scrollbar { display: none; }
+        .chart-col { display: flex; flex-direction: column; align-items: center; min-width: 55px; position: relative; }
+        .chart-val-label { font-size: 12px; font-weight: 700; color: var(--blue); margin-bottom: 8px; }
+        .chart-bar {
+            width: 36px; background: linear-gradient(to top, #007AFF, #4facfe);
+            border-radius: 10px 10px 0 0; min-height: 8px;
+            box-shadow: 0 6px 10px rgba(0, 122, 255, 0.25); transition: height 0.3s ease-out;
+        }
+        .chart-bar.current {
+            background: linear-gradient(to top, #34C759, #6aeba3); box-shadow: 0 6px 10px rgba(52, 199, 89, 0.3);
+        }
+        .chart-col.current .chart-val-label { color: var(--green); }
+        .chart-label { font-size: 12px; margin-top: 10px; color: #8E8E93; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <div id="view-home">
+        <header>
+            <div class="nav-month">
+                <button class="btn-nav" onclick="addMonth(-1)">❮</button>
+                <span class="title-month" id="displayMonth">Mês</span>
+                <button class="btn-nav" onclick="addMonth(1)">❯</button>
+            </div>
+        </header>
+
+        <div class="card-summary">
+            <div class="lbl-total">A Pagar em <span id="lblMonthName">...</span></div>
+            <div class="val-total" id="totalValue">R$ 0,00</div>
+            
+            <div class="summary-row">
+                <div class="pill-val pill-paid" id="paidValue">Pago: R$ 0,00</div>
+                <div class="pill-val pill-left" id="leftValue">Falta: R$ 0,00</div>
+            </div>
+        </div>
+
+        <div class="list-area" id="listItems"></div>
+        
+        <div class="backup-section">
+            <button class="btn-sec" onclick="exportData()"><span>☁️</span> Fazer Backup</button>
+            <button class="btn-sec" onclick="document.getElementById('restoreInput').click()"><span>📂</span> Restaurar</button>
+            <input type="file" id="restoreInput" hidden onchange="importData(this)" accept=".json">
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 30px; margin-top: 20px;">
+            <button onclick="hardReset()" style="color: #ccc; background: none; border: none; font-size: 11px;">Resetar App</button>
+        </div>
+
+        <div class="fab" onclick="openModal()">+</div>
+    </div>
+
+    <div id="view-charts">
+        <h2>Previsão de Gastos</h2>
+        <p style="color: #8e8e93; font-size: 14px; margin-bottom: 30px;">Visão geral dos próximos meses.</p>
+        <div class="chart-bar-container" id="chartArea"></div>
+    </div>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="goTab('home')" id="tab-home-btn">
+            <span class="tab-icon">☰</span> Início
+        </button>
+        <button class="tab-btn" onclick="goTab('charts')" id="tab-charts-btn">
+            <span class="tab-icon">📊</span> Relatório
+        </button>
+    </div>
+
+    <div class="modal-bg" id="modal">
+        <div class="modal-body">
+            <div class="modal-header">
+                <h3 id="modalTitle">Nova Conta</h3>
+                <button class="btn-close" onclick="closeModal()">Cancelar</button>
+            </div>
+
+            <input type="hidden" id="editId">
+            <input type="hidden" id="editGroupId">
+            
+            <div class="form-group">
+                <label>Nome da Conta</label>
+                <input type="text" id="inpName" placeholder="Ex: Aluguel">
+            </div>
+
+            <div class="form-group">
+                <label>Valor (R$)</label>
+                <input type="text" inputmode="decimal" id="inpValue" placeholder="0,00">
+            </div>
+            
+            <div class="form-group">
+                <label>Observação</label>
+                <input type="text" id="inpDesc" placeholder="Ex: Detalhes opcionais">
+            </div>
+
+            <div class="form-group" id="rowRecurrence">
+                <label>Repetir por</label>
+                <select id="inpRecurrence">
+                    <option value="1">Só este mês</option>
+                    <option value="2">2 meses</option>
+                    <option value="3">3 meses</option>
+                    <option value="6">6 meses</option>
+                    <option value="12">1 ano</option>
+                    <option value="999">Fixo (Indefinido)</option>
+                </select>
+            </div>
+
+            <button class="btn-main" onclick="saveData()">Salvar</button>
+            
+            <div id="deleteActions" class="hidden" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn-main btn-delete" onclick="deleteItem('single')">Apagar apenas esta</button>
+                <button class="btn-main btn-delete-future hidden" id="btnDeleteFuture" onclick="deleteItem('future')">Apagar esta e futuras</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG ---
+        let db = JSON.parse(localStorage.getItem('finAppV11')) || [];
+        // Migração de bases antigas
+        if(db.length === 0) {
+            db = JSON.parse(localStorage.getItem('finAppV10')) || JSON.parse(localStorage.getItem('finAppV6')) || [];
+        }
+
+        let viewDate = new Date();
+
+        document.addEventListener('DOMContentLoaded', render);
+
+        // --- NAV ---
+        function addMonth(n) { viewDate.setMonth(viewDate.getMonth() + n); render(); }
+
+        function goTab(tab) {
+            document.getElementById('view-home').style.display = tab === 'home' ? 'block' : 'none';
+            document.getElementById('view-charts').style.display = tab === 'charts' ? 'block' : 'none';
+            document.getElementById('tab-home-btn').classList.toggle('active', tab === 'home');
+            document.getElementById('tab-charts-btn').classList.toggle('active', tab === 'charts');
+            if (tab === 'charts') renderCharts();
+        }
+
+        // --- RENDER ---
+        function render() {
+            const mName = viewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            document.getElementById('displayMonth').innerText = mName;
+            document.getElementById('lblMonthName').innerText = viewDate.toLocaleDateString('pt-BR', { month: 'long' });
+
+            const key = getKey(viewDate);
+            const items = db.filter(i => i.key === key);
+
+            const total = items.reduce((a, b) => a + b.val, 0);
+            const paid = items.filter(i => i.paid).reduce((a, b) => a + b.val, 0);
+            const left = total - paid;
+
+            // Atualiza Resumo (Topo)
+            document.getElementById('totalValue').innerText = formatMo(total);
+            document.getElementById('paidValue').innerText = 'Pago: ' + formatMo(paid);
+            document.getElementById('leftValue').innerText = 'Falta: ' + formatMo(left);
+
+            const list = document.getElementById('listItems');
+            list.innerHTML = '';
+            
+            if (items.length === 0) list.innerHTML = '<div style="text-align:center; color:#999; margin-top:50px;">Toque no + para começar</div>';
+
+            items.forEach(item => {
+                const div = document.createElement('div');
+                const statusClass = item.paid ? 'paid' : 'pending';
+                div.className = `item-card ${statusClass}`;
+                
+                // Clique no card abre modal (evita conflito com botoes internos)
+                div.onclick = (e) => { 
+                    if(!e.target.closest('.check-box') && !e.target.closest('.btn-action')) {
+                        openModal(item.id);
+                    }
+                };
+
+                let parc = item.total > 1 ? ` • ${item.curr}/${item.total > 100 ? 'Fixo' : item.total}` : '';
+                
+                // Detalhes (Visível se existir texto)
+                const hasDesc = item.desc && item.desc.trim() !== '';
+                const expandClass = hasDesc ? 'open' : '';
+                const detailsClass = hasDesc ? 'show' : '';
+                
+                // Botões
+                const trashBtn = `<button class="btn-action" onclick="trashClick('${item.id}', '${item.group}', ${item.total > 1}, event)">🗑️</button>`;
+                const expandBtn = hasDesc ? `<button class="btn-action btn-expand ${expandClass}" onclick="toggleDesc('${item.id}', event)">▼</button>` : '';
+                const descHtml = hasDesc ? `<div id="desc-${item.id}" class="card-details ${detailsClass}">${item.desc}</div>` : '';
+
+                div.innerHTML = `
+                    <div class="card-top">
+                        <div class="item-left">
+                            <div class="check-box" onclick="togglePaid('${item.id}', event)"></div>
+                            <div class="item-info">
+                                <h3>${item.name}</h3>
+                                <span>${viewDate.toLocaleDateString('pt-BR',{month:'short'})}${parc}</span>
+                            </div>
+                        </div>
+                        <div class="item-right">
+                            <div class="item-value">${formatMo(item.val)}</div>
+                            ${trashBtn}
+                            ${expandBtn}
+                        </div>
+                    </div>
+                    ${descHtml}
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // --- AÇÕES DO CARD ---
+        function toggleDesc(id, event) {
+            event.stopPropagation();
+            const descDiv = document.getElementById(`desc-${id}`);
+            const btn = event.target;
+            if (descDiv.classList.contains('show')) {
+                descDiv.classList.remove('show');
+                btn.classList.remove('open');
+            } else {
+                descDiv.classList.add('show');
+                btn.classList.add('open');
+            }
+        }
+
+        function trashClick(id, groupId, isRecurrent, event) {
+            event.stopPropagation();
+            if(!confirm("Deseja apagar esta conta?")) return;
+
+            if(isRecurrent) {
+                if(confirm("Esta é uma conta recorrente.\n\n[OK] Apagar TAMBÉM as futuras\n[Cancelar] Apagar APENAS esta")) {
+                    deleteItem('future', id, groupId); // Reuse logic with params
+                } else {
+                    deleteItem('single', id);
+                }
+            } else {
+                deleteItem('single', id);
+            }
+        }
+
+        function togglePaid(id, event) {
+            if(event) event.stopPropagation();
+            const idx = db.findIndex(i => i.id === id);
+            if (idx !== -1) {
+                db[idx].paid = !db[idx].paid;
+                saveDb();
+                render();
+            }
+        }
+
+        // --- SALVAR & DELETAR ---
+        function saveData() {
+            const id = document.getElementById('editId').value;
+            const name = document.getElementById('inpName').value;
+            const desc = document.getElementById('inpDesc').value;
+            let valStr = document.getElementById('inpValue').value.replace(',', '.');
+            const val = parseFloat(valStr);
+
+            if (!name || isNaN(val) || val <= 0) { alert('Preencha os dados.'); return; }
+
+            if (id) {
+                const idx = db.findIndex(i => i.id === id);
+                if (idx !== -1) {
+                    db[idx].name = name;
+                    db[idx].val = val;
+                    db[idx].desc = desc;
+                }
+            } else {
+                const recur = parseInt(document.getElementById('inpRecurrence').value);
+                const group = Date.now().toString();
+                let tempDate = new Date(viewDate);
+
+                for (let i = 0; i < recur; i++) {
+                    db.push({
+                        id: Math.random().toString(36).substr(2),
+                        group: group,
+                        name: name,
+                        val: val,
+                        desc: desc,
+                        key: getKey(tempDate),
+                        paid: false,
+                        curr: i + 1,
+                        total: recur
+                    });
+                    tempDate.setMonth(tempDate.getMonth() + 1);
+                }
+            }
+            saveDb();
+            closeModal();
+            render();
+        }
+
+        // Função ajustada para ser chamada via Modal OU via Lixeirinha
+        function deleteItem(mode, forceId = null, forceGroup = null) {
+            // Se veio da lixeira, usa os parametros. Se veio do modal, pega do input hidden
+            const id = forceId || document.getElementById('editId').value;
+            const groupId = forceGroup || document.getElementById('editGroupId').value;
+
+            if (mode === 'single') {
+                db = db.filter(i => i.id !== id);
+            } 
+            else if (mode === 'future') {
+                const currentItem = db.find(i => i.id === id);
+                if(!currentItem) return;
+                const currentKeyVals = currentItem.key.split('-').map(Number);
+
+                db = db.filter(item => {
+                    if (item.group !== groupId) return true;
+                    const itemKeyVals = item.key.split('-').map(Number);
+                    const isFutureOrCurrent = (itemKeyVals[0] > currentKeyVals[0]) || 
+                                              (itemKeyVals[0] === currentKeyVals[0] && itemKeyVals[1] >= currentKeyVals[1]);
+                    return !isFutureOrCurrent;
+                });
+            }
+
+            saveDb();
+            if(!forceId) closeModal(); // Só fecha modal se foi chamado de lá
+            render();
+        }
+
+        // --- BACKUP ---
+        function exportData() {
+            const dataStr = JSON.stringify(db);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "backup_financas.json";
+            a.click();
+        }
+        function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const loaded = JSON.parse(e.target.result);
+                    if(confirm(`Carregar ${loaded.length} registros?`)) { db = loaded; saveDb(); render(); }
+                } catch(err) { alert('Erro no arquivo.'); }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        // --- MODAL & UTILS ---
+        function openModal(id = null) {
+            const modal = document.getElementById('modal');
+            const inpId = document.getElementById('editId');
+            const delArea = document.getElementById('deleteActions');
+            const btnFuture = document.getElementById('btnDeleteFuture');
+            const rowRec = document.getElementById('rowRecurrence');
+
+            if (id) {
+                const item = db.find(i => i.id === id);
+                document.getElementById('modalTitle').innerText = "Detalhes";
+                inpId.value = id;
+                document.getElementById('editGroupId').value = item.group;
+                document.getElementById('inpName').value = item.name;
+                document.getElementById('inpValue').value = item.val.toFixed(2).replace('.', ',');
+                document.getElementById('inpDesc').value = item.desc || '';
+                
+                delArea.classList.remove('hidden');
+                rowRec.classList.add('hidden');
+                item.total > 1 ? btnFuture.classList.remove('hidden') : btnFuture.classList.add('hidden');
+            } else {
+                document.getElementById('modalTitle').innerText = "Nova Conta";
+                inpId.value = '';
+                document.getElementById('editGroupId').value = '';
+                document.getElementById('inpName').value = '';
+                document.getElementById('inpValue').value = '';
+                document.getElementById('inpDesc').value = '';
+                delArea.classList.add('hidden');
+                rowRec.classList.remove('hidden');
+            }
+            modal.classList.add('show');
+        }
+
+        function closeModal() { document.getElementById('modal').classList.remove('show'); }
+        function getKey(d) { return `${d.getFullYear()}-${d.getMonth()}`; }
+        function formatMo(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+        function saveDb() { localStorage.setItem('finAppV11', JSON.stringify(db)); }
+        function hardReset() { if(confirm("Apagar tudo?")) { localStorage.removeItem('finAppV11'); db=[]; render(); } }
+
+        // --- CHARTS ---
+        function renderCharts() {
+            const area = document.getElementById('chartArea');
+            area.innerHTML = '';
+            let temp = new Date();
+            temp.setMonth(temp.getMonth() - 1);
+            let maxVal = 0;
+            for(let i=0; i<8; i++) {
+                let t = new Date(temp); t.setMonth(t.getMonth() + i);
+                const sum = db.filter(x => x.key === getKey(t)).reduce((a,b)=>a+b.val, 0);
+                if(sum > maxVal) maxVal = sum;
+            }
+            maxVal = maxVal || 1;
+            for(let i=0; i<8; i++) {
+                const k = getKey(temp);
+                const isCurrent = k === getKey(new Date());
+                const sum = db.filter(x => x.key === k).reduce((a,b)=>a+b.val, 0);
+                const h = (sum / maxVal) * 160; 
+                const col = document.createElement('div');
+                col.className = `chart-col ${isCurrent ? 'current' : ''}`;
+                col.innerHTML = `
+                    <div class="chart-val-label">R$${Math.round(sum)}</div>
+                    <div class="chart-bar ${isCurrent ? 'current' : ''}" style="height:${Math.max(h, 8)}px;"></div>
+                    <div class="chart-label">${temp.toLocaleDateString('pt-BR',{month:'short'}).replace('.','')}</div>
+                `;
+                area.appendChild(col);
+                temp.setMonth(temp.getMonth() + 1);
+            }
+            setTimeout(() => { area.scrollLeft = 50; }, 100);
+        }
+    </script>
+</body>
+</html>
