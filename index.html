@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#F2F2F7">
-    <title>Minhas Finanças V11</title>
+    <title>Minhas Finanças V13</title>
     <style>
         :root {
             --bg-body: #F2F2F7;
@@ -47,7 +47,6 @@
         .lbl-total { color: #8E8E93; font-size: 13px; text-transform: uppercase; }
         .val-total { font-size: 38px; font-weight: 700; margin: 5px 0; color: #000; letter-spacing: -1px;}
         
-        /* Nova linha de resumo (Pago + Falta) */
         .summary-row { display: flex; justify-content: center; gap: 10px; margin-top: 5px; }
         .pill-val { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 12px; }
         .pill-paid { color: var(--green); background: rgba(52,199,89,0.15); }
@@ -69,7 +68,7 @@
         .item-card.pending { background-color: var(--red); color: white; }
         .item-card.pending .item-info span { color: rgba(255,255,255,0.8); }
         .item-card.pending .check-box { border-color: white; } 
-        .item-card.pending .btn-action { color: rgba(255,255,255,0.8); }
+        .item-card.pending .btn-action { color: rgba(255,255,255,0.9); }
 
         .item-card.paid { background-color: var(--green); color: white; }
         .item-card.paid .item-info span { color: rgba(255,255,255,0.8); }
@@ -88,20 +87,19 @@
 
         .item-info h3 { margin: 0; font-size: 17px; font-weight: 800; }
         .item-info span { font-size: 13px; }
+        .due-date-badge { font-size: 11px; opacity: 0.9; font-weight: 600; text-transform: uppercase; margin-right: 5px; }
         
-        .item-right { display: flex; align-items: center; gap: 12px; }
-        .item-value { font-size: 17px; font-weight: 700; text-align: right; }
+        .item-right { display: flex; align-items: center; gap: 8px; }
+        .item-value { font-size: 17px; font-weight: 700; text-align: right; margin-right: 5px;}
         
-        /* Botões do Card (Lixo e Seta) */
         .btn-action {
-            background: none; border: none; font-size: 16px; padding: 5px;
+            background: none; border: none; font-size: 16px; padding: 6px;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
         }
         .btn-expand { font-size: 12px; transition: transform 0.3s; }
         .btn-expand.open { transform: rotate(180deg); }
         
-        /* Detalhes */
         .card-details {
             margin-top: 0; max-height: 0; overflow: hidden;
             font-size: 14px; opacity: 0.9;
@@ -154,6 +152,9 @@
             border: none; border-radius: 12px;
             font-size: 17px; color: #000; outline: none;
         }
+        
+        .flex-row { display: flex; gap: 10px; }
+        .flex-row .form-group { flex: 1; }
 
         .btn-main {
             width: 100%; background: var(--blue); color: white;
@@ -273,9 +274,15 @@
                 <input type="text" id="inpName" placeholder="Ex: Aluguel">
             </div>
 
-            <div class="form-group">
-                <label>Valor (R$)</label>
-                <input type="text" inputmode="decimal" id="inpValue" placeholder="0,00">
+            <div class="flex-row">
+                <div class="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="text" inputmode="decimal" id="inpValue" placeholder="0,00">
+                </div>
+                <div class="form-group">
+                    <label>Dia Venc.</label>
+                    <input type="number" inputmode="numeric" id="inpDay" placeholder="Dia">
+                </div>
             </div>
             
             <div class="form-group">
@@ -286,11 +293,18 @@
             <div class="form-group" id="rowRecurrence">
                 <label>Repetir por</label>
                 <select id="inpRecurrence">
-                    <option value="1">Só este mês</option>
-                    <option value="2">2 meses</option>
-                    <option value="3">3 meses</option>
-                    <option value="6">6 meses</option>
-                    <option value="12">1 ano</option>
+                    <option value="1">1x (Só este mês)</option>
+                    <option value="2">2x</option>
+                    <option value="3">3x</option>
+                    <option value="4">4x</option>
+                    <option value="5">5x</option>
+                    <option value="6">6x</option>
+                    <option value="7">7x</option>
+                    <option value="8">8x</option>
+                    <option value="9">9x</option>
+                    <option value="10">10x</option>
+                    <option value="11">11x</option>
+                    <option value="12">12x (1 ano)</option>
                     <option value="999">Fixo (Indefinido)</option>
                 </select>
             </div>
@@ -307,10 +321,9 @@
 
     <script>
         // --- CONFIG ---
-        let db = JSON.parse(localStorage.getItem('finAppV11')) || [];
-        // Migração de bases antigas
+        let db = JSON.parse(localStorage.getItem('finAppV13')) || [];
         if(db.length === 0) {
-            db = JSON.parse(localStorage.getItem('finAppV10')) || JSON.parse(localStorage.getItem('finAppV6')) || [];
+            db = JSON.parse(localStorage.getItem('finAppV12')) || JSON.parse(localStorage.getItem('finAppV11')) || [];
         }
 
         let viewDate = new Date();
@@ -337,11 +350,13 @@
             const key = getKey(viewDate);
             const items = db.filter(i => i.key === key);
 
+            // Ordena por dia (se houver)
+            items.sort((a, b) => (a.day || 32) - (b.day || 32));
+
             const total = items.reduce((a, b) => a + b.val, 0);
             const paid = items.filter(i => i.paid).reduce((a, b) => a + b.val, 0);
             const left = total - paid;
 
-            // Atualiza Resumo (Topo)
             document.getElementById('totalValue').innerText = formatMo(total);
             document.getElementById('paidValue').innerText = 'Pago: ' + formatMo(paid);
             document.getElementById('leftValue').innerText = 'Falta: ' + formatMo(left);
@@ -356,7 +371,6 @@
                 const statusClass = item.paid ? 'paid' : 'pending';
                 div.className = `item-card ${statusClass}`;
                 
-                // Clique no card abre modal (evita conflito com botoes internos)
                 div.onclick = (e) => { 
                     if(!e.target.closest('.check-box') && !e.target.closest('.btn-action')) {
                         openModal(item.id);
@@ -365,15 +379,18 @@
 
                 let parc = item.total > 1 ? ` • ${item.curr}/${item.total > 100 ? 'Fixo' : item.total}` : '';
                 
-                // Detalhes (Visível se existir texto)
                 const hasDesc = item.desc && item.desc.trim() !== '';
                 const expandClass = hasDesc ? 'open' : '';
                 const detailsClass = hasDesc ? 'show' : '';
                 
-                // Botões
+                // Botões de Ação
+                const calBtn = `<button class="btn-action" onclick="addToCalendar('${item.id}', event)" title="Add ao Calendário">📅</button>`;
                 const trashBtn = `<button class="btn-action" onclick="trashClick('${item.id}', '${item.group}', ${item.total > 1}, event)">🗑️</button>`;
                 const expandBtn = hasDesc ? `<button class="btn-action btn-expand ${expandClass}" onclick="toggleDesc('${item.id}', event)">▼</button>` : '';
                 const descHtml = hasDesc ? `<div id="desc-${item.id}" class="card-details ${detailsClass}">${item.desc}</div>` : '';
+
+                // Exibir o dia
+                let dayBadge = item.day ? `<span class="due-date-badge">DIA ${item.day}</span>` : '';
 
                 div.innerHTML = `
                     <div class="card-top">
@@ -381,11 +398,12 @@
                             <div class="check-box" onclick="togglePaid('${item.id}', event)"></div>
                             <div class="item-info">
                                 <h3>${item.name}</h3>
-                                <span>${viewDate.toLocaleDateString('pt-BR',{month:'short'})}${parc}</span>
+                                <span>${dayBadge}${viewDate.toLocaleDateString('pt-BR',{month:'short'})}${parc}</span>
                             </div>
                         </div>
                         <div class="item-right">
                             <div class="item-value">${formatMo(item.val)}</div>
+                            ${calBtn}
                             ${trashBtn}
                             ${expandBtn}
                         </div>
@@ -394,6 +412,44 @@
                 `;
                 list.appendChild(div);
             });
+        }
+
+        // --- CALENDAR SYNC ---
+        function addToCalendar(id, event) {
+            event.stopPropagation();
+            const item = db.find(i => i.id === id);
+            if(!item) return;
+
+            // Define a data
+            const [y, m] = item.key.split('-').map(Number);
+            const d = item.day || 1; // Se não tiver dia, usa dia 1
+            
+            // Formatar data para YYYYMMDD
+            const strMonth = (m + 1).toString().padStart(2, '0');
+            const strDay = d.toString().padStart(2, '0');
+            const dateStr = `${y}${strMonth}${strDay}`;
+
+            // Criar conteúdo .ICS
+            const icsContent = 
+`BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Minhas Finanças//App//PT
+BEGIN:VEVENT
+UID:${item.id}@minhasfinancas.app
+DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+DTSTART;VALUE=DATE:${dateStr}
+SUMMARY:Pagar ${item.name} (${formatMo(item.val)})
+DESCRIPTION:${item.desc || 'Pagamento registrado no app Minhas Finanças.'}
+END:VEVENT
+END:VCALENDAR`;
+
+            // Download file
+            const blob = new Blob([icsContent], { type: 'text/calendar' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pagar_${item.name}.ics`;
+            a.click();
         }
 
         // --- AÇÕES DO CARD ---
@@ -415,8 +471,8 @@
             if(!confirm("Deseja apagar esta conta?")) return;
 
             if(isRecurrent) {
-                if(confirm("Esta é uma conta recorrente.\n\n[OK] Apagar TAMBÉM as futuras\n[Cancelar] Apagar APENAS esta")) {
-                    deleteItem('future', id, groupId); // Reuse logic with params
+                if(confirm("Conta recorrente.\n\n[OK] Apagar TAMBÉM as futuras\n[Cancelar] Apagar APENAS esta")) {
+                    deleteItem('future', id, groupId);
                 } else {
                     deleteItem('single', id);
                 }
@@ -440,20 +496,52 @@
             const id = document.getElementById('editId').value;
             const name = document.getElementById('inpName').value;
             const desc = document.getElementById('inpDesc').value;
+            const day = parseInt(document.getElementById('inpDay').value) || null; // Novo campo
             let valStr = document.getElementById('inpValue').value.replace(',', '.');
             const val = parseFloat(valStr);
+            const recurrenceInput = parseInt(document.getElementById('inpRecurrence').value);
 
             if (!name || isNaN(val) || val <= 0) { alert('Preencha os dados.'); return; }
 
             if (id) {
-                const idx = db.findIndex(i => i.id === id);
-                if (idx !== -1) {
-                    db[idx].name = name;
-                    db[idx].val = val;
-                    db[idx].desc = desc;
+                const item = db.find(i => i.id === id);
+                if (item) {
+                    db.forEach(i => {
+                        if(i.group === item.group) {
+                            i.name = name; i.val = val; i.desc = desc; i.day = day;
+                        }
+                    });
+
+                    const oldTotal = item.total;
+                    const newTotal = recurrenceInput;
+                    const currentInst = item.curr;
+
+                    if (newTotal !== oldTotal && newTotal !== 999) {
+                        db.forEach(i => { if(i.group === item.group) i.total = newTotal; });
+                        db = db.filter(i => !(i.group === item.group && i.curr > newTotal));
+
+                        const [y, m] = item.key.split('-').map(Number);
+                        let baseDate = new Date(y, m, 1);
+
+                        for (let i = currentInst + 1; i <= newTotal; i++) {
+                            const exists = db.find(x => x.group === item.group && x.curr === i);
+                            if (!exists) {
+                                let targetDate = new Date(baseDate);
+                                targetDate.setMonth(baseDate.getMonth() + (i - currentInst));
+                                db.push({
+                                    id: Math.random().toString(36).substr(2),
+                                    group: item.group,
+                                    name: name, val: val, desc: desc, day: day,
+                                    key: getKey(targetDate), paid: false, curr: i, total: newTotal
+                                });
+                            }
+                        }
+                    } else if (newTotal === 999) {
+                        db.forEach(i => { if(i.group === item.group) i.total = 999; });
+                    }
                 }
             } else {
-                const recur = parseInt(document.getElementById('inpRecurrence').value);
+                const recur = recurrenceInput;
                 const group = Date.now().toString();
                 let tempDate = new Date(viewDate);
 
@@ -461,13 +549,8 @@
                     db.push({
                         id: Math.random().toString(36).substr(2),
                         group: group,
-                        name: name,
-                        val: val,
-                        desc: desc,
-                        key: getKey(tempDate),
-                        paid: false,
-                        curr: i + 1,
-                        total: recur
+                        name: name, val: val, desc: desc, day: day,
+                        key: getKey(tempDate), paid: false, curr: i + 1, total: recur
                     });
                     tempDate.setMonth(tempDate.getMonth() + 1);
                 }
@@ -477,9 +560,7 @@
             render();
         }
 
-        // Função ajustada para ser chamada via Modal OU via Lixeirinha
         function deleteItem(mode, forceId = null, forceGroup = null) {
-            // Se veio da lixeira, usa os parametros. Se veio do modal, pega do input hidden
             const id = forceId || document.getElementById('editId').value;
             const groupId = forceGroup || document.getElementById('editGroupId').value;
 
@@ -501,7 +582,7 @@
             }
 
             saveDb();
-            if(!forceId) closeModal(); // Só fecha modal se foi chamado de lá
+            if(!forceId) closeModal();
             render();
         }
 
@@ -535,7 +616,7 @@
             const inpId = document.getElementById('editId');
             const delArea = document.getElementById('deleteActions');
             const btnFuture = document.getElementById('btnDeleteFuture');
-            const rowRec = document.getElementById('rowRecurrence');
+            const inpRecurrence = document.getElementById('inpRecurrence');
 
             if (id) {
                 const item = db.find(i => i.id === id);
@@ -545,9 +626,10 @@
                 document.getElementById('inpName').value = item.name;
                 document.getElementById('inpValue').value = item.val.toFixed(2).replace('.', ',');
                 document.getElementById('inpDesc').value = item.desc || '';
-                
+                document.getElementById('inpDay').value = item.day || '';
+                inpRecurrence.value = item.total;
+
                 delArea.classList.remove('hidden');
-                rowRec.classList.add('hidden');
                 item.total > 1 ? btnFuture.classList.remove('hidden') : btnFuture.classList.add('hidden');
             } else {
                 document.getElementById('modalTitle').innerText = "Nova Conta";
@@ -556,8 +638,9 @@
                 document.getElementById('inpName').value = '';
                 document.getElementById('inpValue').value = '';
                 document.getElementById('inpDesc').value = '';
+                document.getElementById('inpDay').value = '';
+                inpRecurrence.value = '1';
                 delArea.classList.add('hidden');
-                rowRec.classList.remove('hidden');
             }
             modal.classList.add('show');
         }
@@ -565,8 +648,8 @@
         function closeModal() { document.getElementById('modal').classList.remove('show'); }
         function getKey(d) { return `${d.getFullYear()}-${d.getMonth()}`; }
         function formatMo(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
-        function saveDb() { localStorage.setItem('finAppV11', JSON.stringify(db)); }
-        function hardReset() { if(confirm("Apagar tudo?")) { localStorage.removeItem('finAppV11'); db=[]; render(); } }
+        function saveDb() { localStorage.setItem('finAppV13', JSON.stringify(db)); }
+        function hardReset() { if(confirm("Apagar tudo?")) { localStorage.removeItem('finAppV13'); db=[]; render(); } }
 
         // --- CHARTS ---
         function renderCharts() {
