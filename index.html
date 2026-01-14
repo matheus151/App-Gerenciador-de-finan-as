@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#F2F2F7">
-    <title>Minhas Finanças V13</title>
+    <title>Minhas Finanças V16</title>
     <style>
         :root {
             --bg-body: #F2F2F7;
@@ -56,7 +56,7 @@
         .list-area { padding: 0 20px; }
         
         .item-card {
-            padding: 16px; border-radius: 14px; margin-bottom: 12px;
+            padding: 12px 16px; border-radius: 14px; margin-bottom: 12px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
             transition: transform 0.1s;
             display: flex; flex-direction: column;
@@ -78,39 +78,37 @@
 
         /* Layout interno */
         .card-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-        .item-left { display: flex; align-items: center; gap: 14px; flex: 1; }
-        
-        .check-box {
-            width: 28px; height: 28px; border-radius: 50%; border: 2px solid;
-            flex-shrink: 0; display: flex; justify-content: center; align-items: center;
-        }
-
-        .item-info h3 { margin: 0; font-size: 17px; font-weight: 800; }
-        .item-info span { font-size: 13px; }
-        .due-date-badge { font-size: 11px; opacity: 0.9; font-weight: 600; text-transform: uppercase; margin-right: 5px; }
-        
-        .item-right { display: flex; align-items: center; gap: 8px; }
-        .item-value { font-size: 17px; font-weight: 700; text-align: right; margin-right: 5px;}
-        
-        .btn-action {
-            background: none; border: none; font-size: 16px; padding: 6px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-        }
-        .btn-expand { font-size: 12px; transition: transform 0.3s; }
+        .item-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding-right: 8px;}
+        .check-box { width: 26px; height: 26px; border-radius: 50%; border: 2px solid; flex-shrink: 0; display: flex; justify-content: center; align-items: center; }
+        .item-info { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+        .item-info h3 { margin: 0; font-size: 16px; font-weight: 700; white-space: normal; word-wrap: break-word; line-height: 1.2; text-align: left; }
+        .item-info span { font-size: 12px; margin-top: 2px; }
+        .due-date-badge { font-size: 10px; opacity: 0.9; font-weight: 700; text-transform: uppercase; margin-right: 4px; }
+        .item-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+        .item-value { font-size: 16px; font-weight: 700; text-align: right; margin-right: 4px;}
+        .btn-action { background: none; border: none; font-size: 13px; padding: 6px 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.9; }
+        .btn-expand { font-size: 10px; transition: transform 0.3s; }
         .btn-expand.open { transform: rotate(180deg); }
-        
-        .card-details {
-            margin-top: 0; max-height: 0; overflow: hidden;
-            font-size: 14px; opacity: 0.9;
-            transition: max-height 0.3s ease, margin-top 0.3s ease;
-            border-top: 1px solid rgba(255,255,255,0.2);
+        .card-details { margin-top: 0; max-height: 0; overflow: hidden; font-size: 13px; opacity: 0.95; transition: max-height 0.3s ease, margin-top 0.3s ease; border-top: 1px solid rgba(255,255,255,0.3); text-align: left; padding-left: 38px; }
+        .card-details.show { margin-top: 10px; max-height: 200px; padding-top: 8px; padding-bottom: 4px;}
+
+        /* --- SALARY CALCULATOR (Home Bottom) --- */
+        .salary-card {
+            background: white; padding: 20px; border-radius: 16px; 
+            margin: 20px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        .card-details.show { margin-top: 12px; max-height: 200px; padding-top: 8px; }
+        .salary-header { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: var(--blue); }
+        .balance-row { display: flex; justify-content: space-between; margin-top: 12px; color: #8E8E93; font-size: 15px; }
+        .balance-row strong { color: #000; }
+        .balance-total { margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .balance-total span { font-size: 16px; font-weight: 600; }
+        .balance-total strong { font-size: 22px; font-weight: 800; }
+        .text-green { color: var(--green) !important; }
+        .text-red { color: var(--red) !important; }
 
         /* --- BACKUP --- */
         .backup-section {
-            padding: 20px; margin-top: 10px;
+            padding: 0 20px; margin-top: 20px;
             display: flex; flex-direction: column; gap: 10px; align-items: center;
         }
         .btn-sec {
@@ -123,87 +121,55 @@
         .btn-sec:active { background: #f2f2f7; transform: scale(0.98); }
 
         /* --- MODAL --- */
-        .modal-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 100;
-            display: none; justify-content: center; align-items: flex-end;
-        }
+        .modal-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; display: none; justify-content: center; align-items: flex-end; }
         .modal-bg.show { display: flex; }
-        
-        .modal-body {
-            background: #FFFFFF; width: 100%; max-width: 600px;
-            border-radius: 20px 20px 0 0; padding: 25px;
-            animation: slideUp 0.3s;
-            padding-bottom: 40px;
-        }
+        .modal-body { background: #FFFFFF; width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 25px; animation: slideUp 0.3s; padding-bottom: 40px; }
         @keyframes slideUp { from {transform: translateY(100%)} to {transform: translateY(0)}}
-
         .modal-header { display: flex; justify-content: space-between; margin-bottom: 25px; align-items: center; }
         .modal-header h3 { margin: 0; font-size: 20px; }
         .btn-close { border: none; background: none; color: var(--blue); font-size: 17px; }
-
         .form-group { margin-bottom: 20px; }
-        .form-group label {
-            display: block; font-size: 14px; color: #8E8E93; margin-bottom: 8px; font-weight: 500;
-        }
-        .form-group input, .form-group select {
-            width: 100%; padding: 14px; 
-            background-color: var(--input-bg);
-            border: none; border-radius: 12px;
-            font-size: 17px; color: #000; outline: none;
-        }
-        
+        .form-group label { display: block; font-size: 14px; color: #8E8E93; margin-bottom: 8px; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 14px; background-color: var(--input-bg); border: none; border-radius: 12px; font-size: 17px; color: #000; outline: none; }
         .flex-row { display: flex; gap: 10px; }
         .flex-row .form-group { flex: 1; }
-
-        .btn-main {
-            width: 100%; background: var(--blue); color: white;
-            padding: 16px; border-radius: 12px; border: none;
-            font-size: 17px; font-weight: 600; margin-top: 10px;
-        }
-        
+        .btn-main { width: 100%; background: var(--blue); color: white; padding: 16px; border-radius: 12px; border: none; font-size: 17px; font-weight: 600; margin-top: 10px; }
         .delete-section { display: none; margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
         .btn-delete { background: white; color: var(--red); border: 1px solid #ffcccc; }
         .btn-delete-future { background: #fff0f0; color: var(--red); border: none; }
 
         /* --- FAB & TABS --- */
-        .fab {
-            position: fixed; bottom: 85px; right: 20px;
-            width: 55px; height: 55px; background: var(--blue);
-            border-radius: 50%; color: white; font-size: 30px;
-            display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 4px 15px rgba(0,122,255,0.4); z-index: 90;
-        }
-
-        .tab-bar {
-            position: fixed; bottom: 0; width: 100%; background: rgba(255,255,255,0.95);
-            border-top: 1px solid #C6C6C8; display: flex; padding-bottom: 20px; padding-top: 10px;
-            z-index: 95;
-        }
+        .fab { position: fixed; bottom: 85px; right: 20px; width: 55px; height: 55px; background: var(--blue); border-radius: 50%; color: white; font-size: 30px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,122,255,0.4); z-index: 90; }
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: rgba(255,255,255,0.95); border-top: 1px solid #C6C6C8; display: flex; padding-bottom: 20px; padding-top: 10px; z-index: 95; }
         .tab-btn { flex: 1; border: none; background: none; color: #8E8E93; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
         .tab-btn.active { color: var(--blue); }
         .tab-icon { font-size: 22px; }
 
         /* --- CHARTS --- */
-        #view-charts { display: none; padding: 80px 20px; }
-        .chart-bar-container {
-            height: 240px; display: flex; align-items: flex-end; gap: 15px;
-            overflow-x: auto; padding: 20px 5px; margin-top: 10px;
-            scrollbar-width: none;
-        }
+        #view-charts { display: none; padding: 60px 20px 100px 20px; }
+        .chart-section { margin-bottom: 40px; }
+        .chart-header { font-size: 18px; font-weight: 700; margin-bottom: 5px; color: #000; }
+        .chart-desc { color: #8E8E93; font-size: 13px; margin-bottom: 15px; }
+
+        .chart-bar-container { height: 180px; display: flex; align-items: flex-end; gap: 15px; overflow-x: auto; padding: 10px 5px; scrollbar-width: none; }
         .chart-bar-container::-webkit-scrollbar { display: none; }
-        .chart-col { display: flex; flex-direction: column; align-items: center; min-width: 55px; position: relative; }
-        .chart-val-label { font-size: 12px; font-weight: 700; color: var(--blue); margin-bottom: 8px; }
-        .chart-bar {
-            width: 36px; background: linear-gradient(to top, #007AFF, #4facfe);
-            border-radius: 10px 10px 0 0; min-height: 8px;
-            box-shadow: 0 6px 10px rgba(0, 122, 255, 0.25); transition: height 0.3s ease-out;
-        }
-        .chart-bar.current {
-            background: linear-gradient(to top, #34C759, #6aeba3); box-shadow: 0 6px 10px rgba(52, 199, 89, 0.3);
-        }
-        .chart-col.current .chart-val-label { color: var(--green); }
-        .chart-label { font-size: 12px; margin-top: 10px; color: #8E8E93; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+        .chart-col { display: flex; flex-direction: column; align-items: center; min-width: 50px; position: relative; }
+        .chart-val-label { font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+        .chart-bar { width: 32px; border-radius: 8px 8px 0 0; min-height: 6px; transition: height 0.3s ease-out; }
+        .chart-label { font-size: 11px; margin-top: 8px; color: #8E8E93; font-weight: 600; text-transform: uppercase; }
+
+        /* Estilos específicos dos gráficos */
+        /* Gráfico 1: Gastos */
+        .bar-expense { background: linear-gradient(to top, #007AFF, #4facfe); box-shadow: 0 4px 8px rgba(0,122,255,0.2); }
+        .bar-expense.current { background: linear-gradient(to top, #0056b3, #007AFF); opacity: 1; }
+        .col-expense .chart-val-label { color: var(--blue); }
+        
+        /* Gráfico 2: Sobra */
+        .bar-balance-pos { background: linear-gradient(to top, #34C759, #6aeba3); box-shadow: 0 4px 8px rgba(52,199,89,0.2); }
+        .bar-balance-neg { background: linear-gradient(to top, #FF3B30, #ff7b72); box-shadow: 0 4px 8px rgba(255,59,48,0.2); }
+        .col-balance .chart-val-label.pos { color: var(--green); }
+        .col-balance .chart-val-label.neg { color: var(--red); }
+
         .hidden { display: none !important; }
 
     </style>
@@ -236,8 +202,24 @@
             <button class="btn-sec" onclick="document.getElementById('restoreInput').click()"><span>📂</span> Restaurar</button>
             <input type="file" id="restoreInput" hidden onchange="importData(this)" accept=".json">
         </div>
+
+        <div class="salary-card">
+            <div class="salary-header">Calculadora do Mês</div>
+            <div class="form-group" style="margin-bottom:10px;">
+                <label>Sua Renda neste Mês (R$)</label>
+                <input type="text" inputmode="decimal" id="inpSalary" placeholder="0,00" onkeyup="updateSalary()">
+            </div>
+            <div class="balance-row">
+                <span>Gastos deste Mês:</span>
+                <strong id="lblExpenses">R$ 0,00</strong>
+            </div>
+            <div class="balance-total">
+                <span>Sobra:</span>
+                <strong id="lblBalance">R$ 0,00</strong>
+            </div>
+        </div>
         
-        <div style="text-align: center; margin-bottom: 30px; margin-top: 20px;">
+        <div style="text-align: center; margin-bottom: 30px; margin-top: 10px;">
             <button onclick="hardReset()" style="color: #ccc; background: none; border: none; font-size: 11px;">Resetar App</button>
         </div>
 
@@ -245,9 +227,19 @@
     </div>
 
     <div id="view-charts">
-        <h2>Previsão de Gastos</h2>
-        <p style="color: #8e8e93; font-size: 14px; margin-bottom: 30px;">Visão geral dos próximos meses.</p>
-        <div class="chart-bar-container" id="chartArea"></div>
+        
+        <div class="chart-section">
+            <div class="chart-header">Evolução de Gastos</div>
+            <div class="chart-desc">Comparativo de despesas totais.</div>
+            <div class="chart-bar-container" id="chartAreaExpenses"></div>
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-header">Saldo Mensal</div>
+            <div class="chart-desc">Quanto sobrou (Salário - Gastos).</div>
+            <div class="chart-bar-container" id="chartAreaBalance"></div>
+        </div>
+
     </div>
 
     <div class="tab-bar">
@@ -321,27 +313,77 @@
 
     <script>
         // --- CONFIG ---
-        let db = JSON.parse(localStorage.getItem('finAppV13')) || [];
+        let db = JSON.parse(localStorage.getItem('finAppV16')) || [];
+        // Migração
         if(db.length === 0) {
-            db = JSON.parse(localStorage.getItem('finAppV12')) || JSON.parse(localStorage.getItem('finAppV11')) || [];
+            db = JSON.parse(localStorage.getItem('finAppV14')) || JSON.parse(localStorage.getItem('finAppV13')) || [];
         }
-
+        
+        let salaryDb = JSON.parse(localStorage.getItem('finAppSalaries')) || {};
         let viewDate = new Date();
 
-        document.addEventListener('DOMContentLoaded', render);
+        document.addEventListener('DOMContentLoaded', () => {
+            render(); // Renderiza home e calculadora
+        });
 
         // --- NAV ---
-        function addMonth(n) { viewDate.setMonth(viewDate.getMonth() + n); render(); }
+        function addMonth(n) { 
+            viewDate.setMonth(viewDate.getMonth() + n); 
+            render(); 
+        }
 
         function goTab(tab) {
             document.getElementById('view-home').style.display = tab === 'home' ? 'block' : 'none';
             document.getElementById('view-charts').style.display = tab === 'charts' ? 'block' : 'none';
             document.getElementById('tab-home-btn').classList.toggle('active', tab === 'home');
             document.getElementById('tab-charts-btn').classList.toggle('active', tab === 'charts');
-            if (tab === 'charts') renderCharts();
+            
+            if (tab === 'charts') {
+                renderCharts();
+            }
         }
 
-        // --- RENDER ---
+        // --- SALARY LOGIC ---
+        function loadSalaryForView() {
+            const key = getKey(viewDate);
+            const val = salaryDb[key] || 0;
+            const input = document.getElementById('inpSalary');
+            if(val > 0) {
+                input.value = val.toFixed(2).replace('.', ',');
+            } else {
+                input.value = '';
+            }
+        }
+
+        function updateSalary() {
+            const valStr = document.getElementById('inpSalary').value.replace(',', '.');
+            let val = parseFloat(valStr);
+            if(isNaN(val)) val = 0;
+            
+            const key = getKey(viewDate);
+            salaryDb[key] = val;
+            localStorage.setItem('finAppSalaries', JSON.stringify(salaryDb));
+            
+            calcBalance();
+        }
+
+        function calcBalance() {
+            const key = getKey(viewDate);
+            const salary = salaryDb[key] || 0;
+
+            const items = db.filter(i => i.key === key);
+            const totalExpenses = items.reduce((a, b) => a + b.val, 0);
+            const balance = salary - totalExpenses;
+
+            document.getElementById('lblExpenses').innerText = formatMo(totalExpenses);
+            const lblBal = document.getElementById('lblBalance');
+            lblBal.innerText = formatMo(balance);
+            
+            if(balance >= 0) lblBal.className = 'text-green';
+            else lblBal.className = 'text-red';
+        }
+
+        // --- RENDER HOME ---
         function render() {
             const mName = viewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
             document.getElementById('displayMonth').innerText = mName;
@@ -349,8 +391,6 @@
 
             const key = getKey(viewDate);
             const items = db.filter(i => i.key === key);
-
-            // Ordena por dia (se houver)
             items.sort((a, b) => (a.day || 32) - (b.day || 32));
 
             const total = items.reduce((a, b) => a + b.val, 0);
@@ -378,18 +418,14 @@
                 };
 
                 let parc = item.total > 1 ? ` • ${item.curr}/${item.total > 100 ? 'Fixo' : item.total}` : '';
-                
                 const hasDesc = item.desc && item.desc.trim() !== '';
                 const expandClass = hasDesc ? 'open' : '';
                 const detailsClass = hasDesc ? 'show' : '';
                 
-                // Botões de Ação
                 const calBtn = `<button class="btn-action" onclick="addToCalendar('${item.id}', event)" title="Add ao Calendário">📅</button>`;
                 const trashBtn = `<button class="btn-action" onclick="trashClick('${item.id}', '${item.group}', ${item.total > 1}, event)">🗑️</button>`;
                 const expandBtn = hasDesc ? `<button class="btn-action btn-expand ${expandClass}" onclick="toggleDesc('${item.id}', event)">▼</button>` : '';
                 const descHtml = hasDesc ? `<div id="desc-${item.id}" class="card-details ${detailsClass}">${item.desc}</div>` : '';
-
-                // Exibir o dia
                 let dayBadge = item.day ? `<span class="due-date-badge">DIA ${item.day}</span>` : '';
 
                 div.innerHTML = `
@@ -412,24 +448,23 @@
                 `;
                 list.appendChild(div);
             });
+            
+            // Atualiza calculadora ao mudar mês na home
+            loadSalaryForView();
+            calcBalance();
         }
 
-        // --- CALENDAR SYNC ---
+        // --- ACTIONS ---
         function addToCalendar(id, event) {
             event.stopPropagation();
             const item = db.find(i => i.id === id);
             if(!item) return;
-
-            // Define a data
             const [y, m] = item.key.split('-').map(Number);
-            const d = item.day || 1; // Se não tiver dia, usa dia 1
-            
-            // Formatar data para YYYYMMDD
+            const d = item.day || 1;
             const strMonth = (m + 1).toString().padStart(2, '0');
             const strDay = d.toString().padStart(2, '0');
             const dateStr = `${y}${strMonth}${strDay}`;
 
-            // Criar conteúdo .ICS
             const icsContent = 
 `BEGIN:VCALENDAR
 VERSION:2.0
@@ -439,11 +474,10 @@ UID:${item.id}@minhasfinancas.app
 DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
 DTSTART;VALUE=DATE:${dateStr}
 SUMMARY:Pagar ${item.name} (${formatMo(item.val)})
-DESCRIPTION:${item.desc || 'Pagamento registrado no app Minhas Finanças.'}
+DESCRIPTION:${item.desc || 'Pagamento registrado no app.'}
 END:VEVENT
 END:VCALENDAR`;
 
-            // Download file
             const blob = new Blob([icsContent], { type: 'text/calendar' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -452,7 +486,6 @@ END:VCALENDAR`;
             a.click();
         }
 
-        // --- AÇÕES DO CARD ---
         function toggleDesc(id, event) {
             event.stopPropagation();
             const descDiv = document.getElementById(`desc-${id}`);
@@ -496,7 +529,7 @@ END:VCALENDAR`;
             const id = document.getElementById('editId').value;
             const name = document.getElementById('inpName').value;
             const desc = document.getElementById('inpDesc').value;
-            const day = parseInt(document.getElementById('inpDay').value) || null; // Novo campo
+            const day = parseInt(document.getElementById('inpDay').value) || null;
             let valStr = document.getElementById('inpValue').value.replace(',', '.');
             const val = parseFloat(valStr);
             const recurrenceInput = parseInt(document.getElementById('inpRecurrence').value);
@@ -588,7 +621,8 @@ END:VCALENDAR`;
 
         // --- BACKUP ---
         function exportData() {
-            const dataStr = JSON.stringify(db);
+            const fullBackup = { db: db, salaries: salaryDb };
+            const dataStr = JSON.stringify(fullBackup);
             const blob = new Blob([dataStr], {type: "application/json"});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -603,7 +637,19 @@ END:VCALENDAR`;
             reader.onload = (e) => {
                 try {
                     const loaded = JSON.parse(e.target.result);
-                    if(confirm(`Carregar ${loaded.length} registros?`)) { db = loaded; saveDb(); render(); }
+                    if(Array.isArray(loaded)) {
+                        if(confirm(`Carregar ${loaded.length} registros (versão antiga)?`)) { 
+                            db = loaded; saveDb(); render(); 
+                        }
+                    } else {
+                        if(confirm(`Carregar registros e salários?`)) { 
+                            db = loaded.db || [];
+                            salaryDb = loaded.salaries || {};
+                            saveDb(); 
+                            localStorage.setItem('finAppSalaries', JSON.stringify(salaryDb));
+                            render(); 
+                        }
+                    }
                 } catch(err) { alert('Erro no arquivo.'); }
             };
             reader.readAsText(file);
@@ -648,38 +694,79 @@ END:VCALENDAR`;
         function closeModal() { document.getElementById('modal').classList.remove('show'); }
         function getKey(d) { return `${d.getFullYear()}-${d.getMonth()}`; }
         function formatMo(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
-        function saveDb() { localStorage.setItem('finAppV13', JSON.stringify(db)); }
-        function hardReset() { if(confirm("Apagar tudo?")) { localStorage.removeItem('finAppV13'); db=[]; render(); } }
+        function saveDb() { localStorage.setItem('finAppV16', JSON.stringify(db)); }
+        function hardReset() { if(confirm("Apagar tudo?")) { localStorage.clear(); db=[]; salaryDb={}; render(); } }
 
-        // --- CHARTS ---
+        // --- CHARTS (2 GRAPHS) ---
         function renderCharts() {
-            const area = document.getElementById('chartArea');
-            area.innerHTML = '';
+            // GRÁFICO 1: GASTOS
+            const areaExp = document.getElementById('chartAreaExpenses');
+            areaExp.innerHTML = '';
+            
+            // GRÁFICO 2: SOBRA
+            const areaBal = document.getElementById('chartAreaBalance');
+            areaBal.innerHTML = '';
+
             let temp = new Date();
-            temp.setMonth(temp.getMonth() - 1);
-            let maxVal = 0;
+            temp.setMonth(temp.getMonth() - 1); // Começa mês passado
+
+            // Calcular máximos para escala
+            let maxExp = 0;
+            let maxBalAbs = 0; // Máximo absoluto para escala do saldo (pode ser negativo)
+
             for(let i=0; i<8; i++) {
                 let t = new Date(temp); t.setMonth(t.getMonth() + i);
-                const sum = db.filter(x => x.key === getKey(t)).reduce((a,b)=>a+b.val, 0);
-                if(sum > maxVal) maxVal = sum;
+                const k = getKey(t);
+                const sum = db.filter(x => x.key === k).reduce((a,b)=>a+b.val, 0);
+                const sal = salaryDb[k] || 0;
+                const bal = sal - sum;
+                
+                if(sum > maxExp) maxExp = sum;
+                if(Math.abs(bal) > maxBalAbs) maxBalAbs = Math.abs(bal);
             }
-            maxVal = maxVal || 1;
+            
+            maxExp = maxExp || 1;
+            maxBalAbs = maxBalAbs || 1;
+
+            // Renderizar Colunas
             for(let i=0; i<8; i++) {
                 const k = getKey(temp);
                 const isCurrent = k === getKey(new Date());
-                const sum = db.filter(x => x.key === k).reduce((a,b)=>a+b.val, 0);
-                const h = (sum / maxVal) * 160; 
-                const col = document.createElement('div');
-                col.className = `chart-col ${isCurrent ? 'current' : ''}`;
-                col.innerHTML = `
-                    <div class="chart-val-label">R$${Math.round(sum)}</div>
-                    <div class="chart-bar ${isCurrent ? 'current' : ''}" style="height:${Math.max(h, 8)}px;"></div>
-                    <div class="chart-label">${temp.toLocaleDateString('pt-BR',{month:'short'}).replace('.','')}</div>
+                const monthLabel = temp.toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
+
+                // --- GASTOS ---
+                const sumExp = db.filter(x => x.key === k).reduce((a,b)=>a+b.val, 0);
+                const hExp = (sumExp / maxExp) * 120; // 120px max height
+                
+                const colExp = document.createElement('div');
+                colExp.className = `chart-col col-expense`;
+                colExp.innerHTML = `
+                    <div class="chart-val-label">R$${Math.round(sumExp)}</div>
+                    <div class="chart-bar bar-expense ${isCurrent ? 'current' : ''}" style="height:${Math.max(hExp, 6)}px;"></div>
+                    <div class="chart-label">${monthLabel}</div>
                 `;
-                area.appendChild(col);
+                areaExp.appendChild(colExp);
+
+                // --- SOBRA (BALANCE) ---
+                const sal = salaryDb[k] || 0;
+                const bal = sal - sumExp;
+                const isPos = bal >= 0;
+                const hBal = (Math.abs(bal) / maxBalAbs) * 120;
+                
+                const colBal = document.createElement('div');
+                colBal.className = `chart-col col-balance`;
+                colBal.innerHTML = `
+                    <div class="chart-val-label ${isPos ? 'pos' : 'neg'}">R$${Math.round(bal)}</div>
+                    <div class="chart-bar ${isPos ? 'bar-balance-pos' : 'bar-balance-neg'}" style="height:${Math.max(hBal, 6)}px;"></div>
+                    <div class="chart-label">${monthLabel}</div>
+                `;
+                areaBal.appendChild(colBal);
+
                 temp.setMonth(temp.getMonth() + 1);
             }
-            setTimeout(() => { area.scrollLeft = 50; }, 100);
+            
+            // Auto scroll para inicio
+            setTimeout(() => { areaExp.scrollLeft = 0; areaBal.scrollLeft = 0; }, 100);
         }
     </script>
 </body>
