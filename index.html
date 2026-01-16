@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#F2F2F7">
-    <title>Minhas Finanças V17</title>
+    <title>Minhas Finanças V18</title>
     <style>
         :root {
             --bg-body: #F2F2F7;
@@ -306,6 +306,19 @@
         </div>
     </div>
 
+    <div class="modal-bg" id="modalRecur" style="z-index: 200;">
+        <div class="modal-body">
+            <h3 style="margin-top:0">Conta Parcelada</h3>
+            <p style="color:#8e8e93; margin-bottom:20px;">Como deseja aplicar esta alteração?</p>
+            
+            <button class="btn-main" onclick="resolveRecur(true)">Todas as parcelas</button>
+            
+            <button class="btn-main" style="background:white; color:var(--blue); border:1px solid #ddd; margin-top:10px;" onclick="resolveRecur(false)">Apenas esta</button>
+            
+            <button class="btn-close" style="width:100%; padding:15px; margin-top:15px; font-size:15px; color:#999;" onclick="closeRecurModal()">Cancelar</button>
+        </div>
+    </div>
+
     <script>
         // --- CONFIG ---
         let db = JSON.parse(localStorage.getItem('finAppV16')) || [];
@@ -314,6 +327,7 @@
         }
         let salaryDb = JSON.parse(localStorage.getItem('finAppSalaries')) || {};
         let viewDate = new Date();
+        let pendingSave = null; // Armazena dados temporariamente para decisão de recorrência
 
         document.addEventListener('DOMContentLoaded', () => { render(); });
 
@@ -498,25 +512,50 @@
 
             if (!name || isNaN(val) || val <= 0) { alert('Preencha os dados.'); return; }
 
+            // Armazena dados em objeto temporário para uso posterior
+            const dataToSave = { id, name, desc, day, val, recurrenceInput };
+
+            if (id) {
+                const item = db.find(i => i.id === id);
+                if (item && item.total > 1) {
+                    // SE É RECORRENTE: Abre modal de decisão e guarda dados
+                    pendingSave = dataToSave;
+                    document.getElementById('modalRecur').classList.add('show');
+                    return; // Para a execução aqui
+                }
+            }
+
+            // SE NÃO FOR RECORRENTE OU FOR NOVO: Salva direto
+            executeSave(dataToSave, false); // false = irrelevante para item unico
+        }
+
+        function resolveRecur(updateAll) {
+            if(pendingSave) {
+                executeSave(pendingSave, updateAll);
+                pendingSave = null;
+                closeRecurModal();
+            }
+        }
+
+        function closeRecurModal() {
+            document.getElementById('modalRecur').classList.remove('show');
+            pendingSave = null;
+        }
+
+        function executeSave(data, updateAll) {
+            const { id, name, desc, day, val, recurrenceInput } = data;
+
             if (id) {
                 const item = db.find(i => i.id === id);
                 if (item) {
-                    // SELEÇÃO: Aplicar a todos ou apenas este?
-                    let updateAll = true;
-                    if(item.total > 1) {
-                         // Se cancelarem o confirm, updateAll vira false
-                         updateAll = confirm("Esta é uma conta parcelada.\n\nAplicar alteração em TODAS as parcelas?");
-                    }
-
                     if(updateAll) {
-                        // Atualiza TODOS do grupo
+                        // ATUALIZA TODAS
                         db.forEach(i => {
                             if(i.group === item.group) {
                                 i.name = name; i.val = val; i.desc = desc; i.day = day;
                             }
                         });
 
-                        // Lógica de Redimensionar Recorrência (Só faz sentido se for "Update All")
                         const oldTotal = item.total;
                         const newTotal = recurrenceInput;
                         const currentInst = item.curr;
@@ -543,8 +582,7 @@
                             db.forEach(i => { if(i.group === item.group) i.total = 999; });
                         }
                     } else {
-                        // Atualiza APENAS O ITEM ATUAL (Desvio na recorrência)
-                        // Mantemos o group ID para permitir "Deletar Futuros" ainda, mas os valores mudam
+                        // ATUALIZA APENAS ESTA
                         const idx = db.findIndex(i => i.id === id);
                         if(idx !== -1) {
                             db[idx].name = name;
@@ -555,6 +593,7 @@
                     }
                 }
             } else {
+                // NOVO ITEM
                 const recur = recurrenceInput;
                 const group = Date.now().toString();
                 let tempDate = new Date(viewDate);
