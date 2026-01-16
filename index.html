@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#F2F2F7">
-    <title>Minhas Finanças V16</title>
+    <title>Minhas Finanças V17</title>
     <style>
         :root {
             --bg-body: #F2F2F7;
@@ -92,7 +92,7 @@
         .card-details { margin-top: 0; max-height: 0; overflow: hidden; font-size: 13px; opacity: 0.95; transition: max-height 0.3s ease, margin-top 0.3s ease; border-top: 1px solid rgba(255,255,255,0.3); text-align: left; padding-left: 38px; }
         .card-details.show { margin-top: 10px; max-height: 200px; padding-top: 8px; padding-bottom: 4px;}
 
-        /* --- SALARY CALCULATOR (Home Bottom) --- */
+        /* --- SALARY CALCULATOR --- */
         .salary-card {
             background: white; padding: 20px; border-radius: 16px; 
             margin: 20px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -159,12 +159,10 @@
         .chart-label { font-size: 11px; margin-top: 8px; color: #8E8E93; font-weight: 600; text-transform: uppercase; }
 
         /* Estilos específicos dos gráficos */
-        /* Gráfico 1: Gastos */
         .bar-expense { background: linear-gradient(to top, #007AFF, #4facfe); box-shadow: 0 4px 8px rgba(0,122,255,0.2); }
         .bar-expense.current { background: linear-gradient(to top, #0056b3, #007AFF); opacity: 1; }
         .col-expense .chart-val-label { color: var(--blue); }
         
-        /* Gráfico 2: Sobra */
         .bar-balance-pos { background: linear-gradient(to top, #34C759, #6aeba3); box-shadow: 0 4px 8px rgba(52,199,89,0.2); }
         .bar-balance-neg { background: linear-gradient(to top, #FF3B30, #ff7b72); box-shadow: 0 4px 8px rgba(255,59,48,0.2); }
         .col-balance .chart-val-label.pos { color: var(--green); }
@@ -227,19 +225,16 @@
     </div>
 
     <div id="view-charts">
-        
         <div class="chart-section">
             <div class="chart-header">Evolução de Gastos</div>
             <div class="chart-desc">Comparativo de despesas totais.</div>
             <div class="chart-bar-container" id="chartAreaExpenses"></div>
         </div>
-
         <div class="chart-section">
             <div class="chart-header">Saldo Mensal</div>
             <div class="chart-desc">Quanto sobrou (Salário - Gastos).</div>
             <div class="chart-bar-container" id="chartAreaBalance"></div>
         </div>
-
     </div>
 
     <div class="tab-bar">
@@ -314,33 +309,23 @@
     <script>
         // --- CONFIG ---
         let db = JSON.parse(localStorage.getItem('finAppV16')) || [];
-        // Migração
         if(db.length === 0) {
             db = JSON.parse(localStorage.getItem('finAppV14')) || JSON.parse(localStorage.getItem('finAppV13')) || [];
         }
-        
         let salaryDb = JSON.parse(localStorage.getItem('finAppSalaries')) || {};
         let viewDate = new Date();
 
-        document.addEventListener('DOMContentLoaded', () => {
-            render(); // Renderiza home e calculadora
-        });
+        document.addEventListener('DOMContentLoaded', () => { render(); });
 
         // --- NAV ---
-        function addMonth(n) { 
-            viewDate.setMonth(viewDate.getMonth() + n); 
-            render(); 
-        }
+        function addMonth(n) { viewDate.setMonth(viewDate.getMonth() + n); render(); }
 
         function goTab(tab) {
             document.getElementById('view-home').style.display = tab === 'home' ? 'block' : 'none';
             document.getElementById('view-charts').style.display = tab === 'charts' ? 'block' : 'none';
             document.getElementById('tab-home-btn').classList.toggle('active', tab === 'home');
             document.getElementById('tab-charts-btn').classList.toggle('active', tab === 'charts');
-            
-            if (tab === 'charts') {
-                renderCharts();
-            }
+            if (tab === 'charts') renderCharts();
         }
 
         // --- SALARY LOGIC ---
@@ -348,29 +333,23 @@
             const key = getKey(viewDate);
             const val = salaryDb[key] || 0;
             const input = document.getElementById('inpSalary');
-            if(val > 0) {
-                input.value = val.toFixed(2).replace('.', ',');
-            } else {
-                input.value = '';
-            }
+            if(val > 0) input.value = val.toFixed(2).replace('.', ',');
+            else input.value = '';
         }
 
         function updateSalary() {
             const valStr = document.getElementById('inpSalary').value.replace(',', '.');
             let val = parseFloat(valStr);
             if(isNaN(val)) val = 0;
-            
             const key = getKey(viewDate);
             salaryDb[key] = val;
             localStorage.setItem('finAppSalaries', JSON.stringify(salaryDb));
-            
             calcBalance();
         }
 
         function calcBalance() {
             const key = getKey(viewDate);
             const salary = salaryDb[key] || 0;
-
             const items = db.filter(i => i.key === key);
             const totalExpenses = items.reduce((a, b) => a + b.val, 0);
             const balance = salary - totalExpenses;
@@ -378,9 +357,7 @@
             document.getElementById('lblExpenses').innerText = formatMo(totalExpenses);
             const lblBal = document.getElementById('lblBalance');
             lblBal.innerText = formatMo(balance);
-            
-            if(balance >= 0) lblBal.className = 'text-green';
-            else lblBal.className = 'text-red';
+            if(balance >= 0) lblBal.className = 'text-green'; else lblBal.className = 'text-red';
         }
 
         // --- RENDER HOME ---
@@ -449,7 +426,6 @@
                 list.appendChild(div);
             });
             
-            // Atualiza calculadora ao mudar mês na home
             loadSalaryForView();
             calcBalance();
         }
@@ -464,20 +440,7 @@
             const strMonth = (m + 1).toString().padStart(2, '0');
             const strDay = d.toString().padStart(2, '0');
             const dateStr = `${y}${strMonth}${strDay}`;
-
-            const icsContent = 
-`BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Minhas Finanças//App//PT
-BEGIN:VEVENT
-UID:${item.id}@minhasfinancas.app
-DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
-DTSTART;VALUE=DATE:${dateStr}
-SUMMARY:Pagar ${item.name} (${formatMo(item.val)})
-DESCRIPTION:${item.desc || 'Pagamento registrado no app.'}
-END:VEVENT
-END:VCALENDAR`;
-
+            const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Minhas Finanças//App//PT\nBEGIN:VEVENT\nUID:${item.id}@minhasfinancas.app\nDTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z\nDTSTART;VALUE=DATE:${dateStr}\nSUMMARY:Pagar ${item.name} (${formatMo(item.val)})\nDESCRIPTION:${item.desc || 'Pagamento registrado no app.'}\nEND:VEVENT\nEND:VCALENDAR`;
             const blob = new Blob([icsContent], { type: 'text/calendar' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -502,7 +465,6 @@ END:VCALENDAR`;
         function trashClick(id, groupId, isRecurrent, event) {
             event.stopPropagation();
             if(!confirm("Deseja apagar esta conta?")) return;
-
             if(isRecurrent) {
                 if(confirm("Conta recorrente.\n\n[OK] Apagar TAMBÉM as futuras\n[Cancelar] Apagar APENAS esta")) {
                     deleteItem('future', id, groupId);
@@ -539,38 +501,57 @@ END:VCALENDAR`;
             if (id) {
                 const item = db.find(i => i.id === id);
                 if (item) {
-                    db.forEach(i => {
-                        if(i.group === item.group) {
-                            i.name = name; i.val = val; i.desc = desc; i.day = day;
-                        }
-                    });
+                    // SELEÇÃO: Aplicar a todos ou apenas este?
+                    let updateAll = true;
+                    if(item.total > 1) {
+                         // Se cancelarem o confirm, updateAll vira false
+                         updateAll = confirm("Esta é uma conta parcelada.\n\nAplicar alteração em TODAS as parcelas?");
+                    }
 
-                    const oldTotal = item.total;
-                    const newTotal = recurrenceInput;
-                    const currentInst = item.curr;
-
-                    if (newTotal !== oldTotal && newTotal !== 999) {
-                        db.forEach(i => { if(i.group === item.group) i.total = newTotal; });
-                        db = db.filter(i => !(i.group === item.group && i.curr > newTotal));
-
-                        const [y, m] = item.key.split('-').map(Number);
-                        let baseDate = new Date(y, m, 1);
-
-                        for (let i = currentInst + 1; i <= newTotal; i++) {
-                            const exists = db.find(x => x.group === item.group && x.curr === i);
-                            if (!exists) {
-                                let targetDate = new Date(baseDate);
-                                targetDate.setMonth(baseDate.getMonth() + (i - currentInst));
-                                db.push({
-                                    id: Math.random().toString(36).substr(2),
-                                    group: item.group,
-                                    name: name, val: val, desc: desc, day: day,
-                                    key: getKey(targetDate), paid: false, curr: i, total: newTotal
-                                });
+                    if(updateAll) {
+                        // Atualiza TODOS do grupo
+                        db.forEach(i => {
+                            if(i.group === item.group) {
+                                i.name = name; i.val = val; i.desc = desc; i.day = day;
                             }
+                        });
+
+                        // Lógica de Redimensionar Recorrência (Só faz sentido se for "Update All")
+                        const oldTotal = item.total;
+                        const newTotal = recurrenceInput;
+                        const currentInst = item.curr;
+
+                        if (newTotal !== oldTotal && newTotal !== 999) {
+                            db.forEach(i => { if(i.group === item.group) i.total = newTotal; });
+                            db = db.filter(i => !(i.group === item.group && i.curr > newTotal));
+                            const [y, m] = item.key.split('-').map(Number);
+                            let baseDate = new Date(y, m, 1);
+                            for (let i = currentInst + 1; i <= newTotal; i++) {
+                                const exists = db.find(x => x.group === item.group && x.curr === i);
+                                if (!exists) {
+                                    let targetDate = new Date(baseDate);
+                                    targetDate.setMonth(baseDate.getMonth() + (i - currentInst));
+                                    db.push({
+                                        id: Math.random().toString(36).substr(2),
+                                        group: item.group,
+                                        name: name, val: val, desc: desc, day: day,
+                                        key: getKey(targetDate), paid: false, curr: i, total: newTotal
+                                    });
+                                }
+                            }
+                        } else if (newTotal === 999) {
+                            db.forEach(i => { if(i.group === item.group) i.total = 999; });
                         }
-                    } else if (newTotal === 999) {
-                        db.forEach(i => { if(i.group === item.group) i.total = 999; });
+                    } else {
+                        // Atualiza APENAS O ITEM ATUAL (Desvio na recorrência)
+                        // Mantemos o group ID para permitir "Deletar Futuros" ainda, mas os valores mudam
+                        const idx = db.findIndex(i => i.id === id);
+                        if(idx !== -1) {
+                            db[idx].name = name;
+                            db[idx].val = val;
+                            db[idx].desc = desc;
+                            db[idx].day = day;
+                        }
                     }
                 }
             } else {
@@ -604,7 +585,6 @@ END:VCALENDAR`;
                 const currentItem = db.find(i => i.id === id);
                 if(!currentItem) return;
                 const currentKeyVals = currentItem.key.split('-').map(Number);
-
                 db = db.filter(item => {
                     if (item.group !== groupId) return true;
                     const itemKeyVals = item.key.split('-').map(Number);
@@ -613,7 +593,6 @@ END:VCALENDAR`;
                     return !isFutureOrCurrent;
                 });
             }
-
             saveDb();
             if(!forceId) closeModal();
             render();
@@ -674,7 +653,6 @@ END:VCALENDAR`;
                 document.getElementById('inpDesc').value = item.desc || '';
                 document.getElementById('inpDay').value = item.day || '';
                 inpRecurrence.value = item.total;
-
                 delArea.classList.remove('hidden');
                 item.total > 1 ? btnFuture.classList.remove('hidden') : btnFuture.classList.add('hidden');
             } else {
@@ -697,22 +675,12 @@ END:VCALENDAR`;
         function saveDb() { localStorage.setItem('finAppV16', JSON.stringify(db)); }
         function hardReset() { if(confirm("Apagar tudo?")) { localStorage.clear(); db=[]; salaryDb={}; render(); } }
 
-        // --- CHARTS (2 GRAPHS) ---
+        // --- CHARTS ---
         function renderCharts() {
-            // GRÁFICO 1: GASTOS
-            const areaExp = document.getElementById('chartAreaExpenses');
-            areaExp.innerHTML = '';
-            
-            // GRÁFICO 2: SOBRA
-            const areaBal = document.getElementById('chartAreaBalance');
-            areaBal.innerHTML = '';
-
-            let temp = new Date();
-            temp.setMonth(temp.getMonth() - 1); // Começa mês passado
-
-            // Calcular máximos para escala
-            let maxExp = 0;
-            let maxBalAbs = 0; // Máximo absoluto para escala do saldo (pode ser negativo)
+            const areaExp = document.getElementById('chartAreaExpenses'); areaExp.innerHTML = '';
+            const areaBal = document.getElementById('chartAreaBalance'); areaBal.innerHTML = '';
+            let temp = new Date(); temp.setMonth(temp.getMonth() - 1);
+            let maxExp = 0; let maxBalAbs = 0;
 
             for(let i=0; i<8; i++) {
                 let t = new Date(temp); t.setMonth(t.getMonth() + i);
@@ -720,52 +688,34 @@ END:VCALENDAR`;
                 const sum = db.filter(x => x.key === k).reduce((a,b)=>a+b.val, 0);
                 const sal = salaryDb[k] || 0;
                 const bal = sal - sum;
-                
                 if(sum > maxExp) maxExp = sum;
                 if(Math.abs(bal) > maxBalAbs) maxBalAbs = Math.abs(bal);
             }
-            
-            maxExp = maxExp || 1;
-            maxBalAbs = maxBalAbs || 1;
+            maxExp = maxExp || 1; maxBalAbs = maxBalAbs || 1;
 
-            // Renderizar Colunas
             for(let i=0; i<8; i++) {
                 const k = getKey(temp);
                 const isCurrent = k === getKey(new Date());
                 const monthLabel = temp.toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
-
-                // --- GASTOS ---
                 const sumExp = db.filter(x => x.key === k).reduce((a,b)=>a+b.val, 0);
-                const hExp = (sumExp / maxExp) * 120; // 120px max height
+                const hExp = (sumExp / maxExp) * 120;
                 
                 const colExp = document.createElement('div');
                 colExp.className = `chart-col col-expense`;
-                colExp.innerHTML = `
-                    <div class="chart-val-label">R$${Math.round(sumExp)}</div>
-                    <div class="chart-bar bar-expense ${isCurrent ? 'current' : ''}" style="height:${Math.max(hExp, 6)}px;"></div>
-                    <div class="chart-label">${monthLabel}</div>
-                `;
+                colExp.innerHTML = `<div class="chart-val-label">R$${Math.round(sumExp)}</div><div class="chart-bar bar-expense ${isCurrent ? 'current' : ''}" style="height:${Math.max(hExp, 6)}px;"></div><div class="chart-label">${monthLabel}</div>`;
                 areaExp.appendChild(colExp);
 
-                // --- SOBRA (BALANCE) ---
                 const sal = salaryDb[k] || 0;
                 const bal = sal - sumExp;
                 const isPos = bal >= 0;
                 const hBal = (Math.abs(bal) / maxBalAbs) * 120;
-                
                 const colBal = document.createElement('div');
                 colBal.className = `chart-col col-balance`;
-                colBal.innerHTML = `
-                    <div class="chart-val-label ${isPos ? 'pos' : 'neg'}">R$${Math.round(bal)}</div>
-                    <div class="chart-bar ${isPos ? 'bar-balance-pos' : 'bar-balance-neg'}" style="height:${Math.max(hBal, 6)}px;"></div>
-                    <div class="chart-label">${monthLabel}</div>
-                `;
+                colBal.innerHTML = `<div class="chart-val-label ${isPos ? 'pos' : 'neg'}">R$${Math.round(bal)}</div><div class="chart-bar ${isPos ? 'bar-balance-pos' : 'bar-balance-neg'}" style="height:${Math.max(hBal, 6)}px;"></div><div class="chart-label">${monthLabel}</div>`;
                 areaBal.appendChild(colBal);
 
                 temp.setMonth(temp.getMonth() + 1);
             }
-            
-            // Auto scroll para inicio
             setTimeout(() => { areaExp.scrollLeft = 0; areaBal.scrollLeft = 0; }, 100);
         }
     </script>
