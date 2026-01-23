@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#F2F2F7">
-    <title>Minhas Finanças V18</title>
+    <title>Minhas Finanças V19</title>
     <style>
         :root {
             --bg-body: #F2F2F7;
@@ -326,13 +326,19 @@
             db = JSON.parse(localStorage.getItem('finAppV14')) || JSON.parse(localStorage.getItem('finAppV13')) || [];
         }
         let salaryDb = JSON.parse(localStorage.getItem('finAppSalaries')) || {};
-        let viewDate = new Date();
-        let pendingSave = null; // Armazena dados temporariamente para decisão de recorrência
+        
+        // RECUPERA A ÚLTIMA TELA VISITADA
+        let savedViewDate = localStorage.getItem('finAppLastView');
+        let viewDate = savedViewDate ? new Date(savedViewDate) : new Date();
+        let pendingSave = null; 
 
         document.addEventListener('DOMContentLoaded', () => { render(); });
 
         // --- NAV ---
-        function addMonth(n) { viewDate.setMonth(viewDate.getMonth() + n); render(); }
+        function addMonth(n) { 
+            viewDate.setMonth(viewDate.getMonth() + n); 
+            render(); 
+        }
 
         function goTab(tab) {
             document.getElementById('view-home').style.display = tab === 'home' ? 'block' : 'none';
@@ -376,6 +382,9 @@
 
         // --- RENDER HOME ---
         function render() {
+            // SALVA A DATA ATUAL NO CACHE
+            localStorage.setItem('finAppLastView', viewDate.toISOString());
+
             const mName = viewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
             document.getElementById('displayMonth').innerText = mName;
             document.getElementById('lblMonthName').innerText = viewDate.toLocaleDateString('pt-BR', { month: 'long' });
@@ -512,21 +521,17 @@
 
             if (!name || isNaN(val) || val <= 0) { alert('Preencha os dados.'); return; }
 
-            // Armazena dados em objeto temporário para uso posterior
             const dataToSave = { id, name, desc, day, val, recurrenceInput };
 
             if (id) {
                 const item = db.find(i => i.id === id);
                 if (item && item.total > 1) {
-                    // SE É RECORRENTE: Abre modal de decisão e guarda dados
                     pendingSave = dataToSave;
                     document.getElementById('modalRecur').classList.add('show');
-                    return; // Para a execução aqui
+                    return; 
                 }
             }
-
-            // SE NÃO FOR RECORRENTE OU FOR NOVO: Salva direto
-            executeSave(dataToSave, false); // false = irrelevante para item unico
+            executeSave(dataToSave, false);
         }
 
         function resolveRecur(updateAll) {
@@ -549,17 +554,14 @@
                 const item = db.find(i => i.id === id);
                 if (item) {
                     if(updateAll) {
-                        // ATUALIZA TODAS
                         db.forEach(i => {
                             if(i.group === item.group) {
                                 i.name = name; i.val = val; i.desc = desc; i.day = day;
                             }
                         });
-
                         const oldTotal = item.total;
                         const newTotal = recurrenceInput;
                         const currentInst = item.curr;
-
                         if (newTotal !== oldTotal && newTotal !== 999) {
                             db.forEach(i => { if(i.group === item.group) i.total = newTotal; });
                             db = db.filter(i => !(i.group === item.group && i.curr > newTotal));
@@ -582,7 +584,6 @@
                             db.forEach(i => { if(i.group === item.group) i.total = 999; });
                         }
                     } else {
-                        // ATUALIZA APENAS ESTA
                         const idx = db.findIndex(i => i.id === id);
                         if(idx !== -1) {
                             db[idx].name = name;
@@ -593,11 +594,9 @@
                     }
                 }
             } else {
-                // NOVO ITEM
                 const recur = recurrenceInput;
                 const group = Date.now().toString();
                 let tempDate = new Date(viewDate);
-
                 for (let i = 0; i < recur; i++) {
                     db.push({
                         id: Math.random().toString(36).substr(2),
